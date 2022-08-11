@@ -10,3 +10,24 @@ git config --global user.name "vlyubchich"
 Drca <- read.csv("./dataraw/rca_data_2012_2022-06-29.csv",
                 nrows = 10) # here load only 10 top rows
 ls(Drca)
+
+# load and reduce size
+library(dplyr)# 
+# Drca <- read.csv("./dataraw/rca_data_2012_2022-06-29.csv") %>% 
+#     select(Date, CellID, WTEMP_avg) %>% 
+#     mutate(Date = as.Date(Date)) %>% 
+#     mutate(Month = as.integer(format(Date, "%m")),
+#            Year = as.integer(format(Date, "%Y"))) %>%
+#     filter(Year == 2012) %>% 
+#     group_by(CellID, Month) %>% 
+#     summarise(WTEMP_avg = mean(WTEMP_avg))
+# summary(Drca)
+# saveRDS(Drca, "./dataderived/Drca.RDS")
+Drca <- readRDS("./dataderived/Drca.RDS")
+
+CELLS <- unique(Drca$CellID)
+set.seed(123)
+cells <- sample(CELLS, 100)
+
+drca <- Drca %>% 
+    filter(is.element(CellID, cells))
