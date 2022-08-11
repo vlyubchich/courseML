@@ -11,7 +11,7 @@ Drca <- read.csv("./dataraw/rca_data_2012_2022-06-29.csv",
                 nrows = 10) # here load only 10 top rows
 ls(Drca)
 
-# load and reduce size
+# load and reduce size of 
 library(dplyr)# 
 # Drca <- read.csv("./dataraw/rca_data_2012_2022-06-29.csv") %>% 
 #     select(Date, CellID, WTEMP_avg) %>% 
@@ -25,6 +25,11 @@ library(dplyr)#
 # saveRDS(Drca, "./dataderived/Drca.RDS")
 Drca <- readRDS("./dataderived/Drca.RDS")
 
+dcells <- read.csv("./dataraw/rca_cells_2022-06-29.csv")
+Drca <- merge(Drca, dcells, by = "CellID")
+with(Drca,
+plot(x = LON, y = LAT, col = "blue")
+)
 CELLS <- unique(Drca$CellID)
 set.seed(123)
 cells <- sample(CELLS, 100)
