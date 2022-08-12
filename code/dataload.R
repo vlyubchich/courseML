@@ -44,9 +44,50 @@ drca <- Drca %>%
     filter(is.element(CellID, cells))
 
 # Load biomass ----
+library(dplyr)
+library(geosphere)
 bmgroups <- read.csv("./dataraw/benthos_taxa_groups.csv",
-                     na.strings = c("."))
+                     na.strings = c(".")) %>% 
+    mutate(LBL = tolower(LBL)) %>% 
+    filter(Hypoxia_grp == "Bivalves")
 
 BM <- read.csv("./dataraw/benthos_biomass.csv") %>% 
-    filter(Year == 2012)
+    filter(Year == 2012) %>% 
+    mutate(LBL = tolower(LBL),
+           BM_bv = 0) 
+BM$BM_bv[is.element(BM$LBL, bmgroups$LBL)] = 
+    BM$VALUE[is.element(BM$LBL, bmgroups$LBL)]
+
+bm <- BM %>% 
+    group_by(STATION, LATITUDE, LONGITUDE) %>%  #Year if analyze >1year
+    summarise(BM_bv = sum(BM_bv))
+
+
+Dcells <- read.csv("./dataraw/rca_cells_2022-06-29.csv") %>% 
+    filter(FSM == 1) #select only water cells
+
+# Dben <- read.csv("./data_benthos/Station_Data.csv")
+
+bm$CellID <- bm$DistanceToNearestKm <- NA #create a new empty variable
+
+# https://www.r-bloggers.com/2019/10/geographic-distance/
+
+# find geodesic distances from each cell to station
+# and select the closest non-missing as a Replacement
+for (i in 1:nrow(bm)) { # i = 1
+    # distance from this station to each cell
+    d <- geosphere::distm(bm[i, c("LONGITUDE", "LATITUDE")],
+                          Dcells[, c("LON", "LAT")]) / 1000L
+    di <- which.min(d)
+    bm$DistanceToNearestKm[i] <- d[di]
+    bm$CellID[i] <- Dcells$CellID[di]
+}
+bm <- bm %>% 
+    # make sure stations are not far from the cells
+    filter(DistanceToNearestKm < 10) 
+
+# Data compilation complete!
+write.csv(bm, './dataderived/Cell_Proximity.csv', 
+          row.names = FALSE)
+
 
