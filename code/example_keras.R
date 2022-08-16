@@ -6,7 +6,7 @@
 # devtools::install_github("rstudio/keras")
 library(keras)
 library(tensorflow)
-tensorflow::install_tensorflow(version = "2.7")
+# tensorflow::install_tensorflow(version = "2.7")
 
 #Simulate a data set
 set.seed(1)
@@ -85,7 +85,7 @@ history <- model %>% fit(
 plot(history)
 
 # Compute probabilities and predictions on test set
-predictions <-  predict_classes(model, test_array)
-probabilities <- predict_proba(model, test_array)
+predictions <-  predict(model, test_array) #probabilities
+# probabilities <- predict_proba(model, test_array)
 #Confusion matrix
-table(Y[-trainindex], predictions)
+table(Y[-trainindex], predictions > 0.5)
