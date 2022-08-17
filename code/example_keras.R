@@ -82,10 +82,20 @@ history <- model %>% fit(
     validation_split = 0.2
 )
 
-plot(history)
+# plot(history)
 
 # Compute probabilities and predictions on test set
 predictions <-  predict(model, test_array) #probabilities
 # probabilities <- predict_proba(model, test_array)
 #Confusion matrix
 table(Y[-trainindex], predictions > 0.5)
+
+table(Y[-trainindex], predictions > 0.1)
+
+
+library(ROCR)
+pred <- prediction(predictions, Y[-trainindex])
+pred
+perf <- performance(pred,"tpr","fpr", "auc")
+perf
+plot(perf)
