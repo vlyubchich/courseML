@@ -46,48 +46,56 @@ drca <- Drca %>%
 # Load biomass ----
 library(dplyr)
 library(geosphere)
+
+## Get bm of bivalves by station in 2012 ----
+# load table with taxonimic groups, etc.; select bivalves
 bmgroups <- read.csv("./dataraw/benthos_taxa_groups.csv",
                      na.strings = c(".")) %>% 
     mutate(LBL = tolower(LBL)) %>% 
     filter(Hypoxia_grp == "Bivalves")
-
+# load biomass observations, create a new variable: biomass of bivalves
 BM <- read.csv("./dataraw/benthos_biomass.csv") %>% 
     filter(Year == 2012) %>% 
     mutate(LBL = tolower(LBL),
            BM_bv = 0) 
+# when LBL is in the "Bivalves", let BM_bv be the observed biomass.
 BM$BM_bv[is.element(BM$LBL, bmgroups$LBL)] = 
     BM$VALUE[is.element(BM$LBL, bmgroups$LBL)]
-
+# for each station, sum the biomass of bivalves
 bm <- BM %>% 
-    group_by(STATION, LATITUDE, LONGITUDE) %>%  #Year if analyze >1year
+    group_by(STATION, LATITUDE, LONGITUDE, SAMPLE_DATE) %>%  #Year if analyze >1year
     summarise(BM_bv = sum(BM_bv))
 
-
+## Match stations in 2012 with the model grid cells ----
 Dcells <- read.csv("./dataraw/rca_cells_2022-06-29.csv") %>% 
-    filter(FSM == 1) #select only water cells
+    filter(FSM == 1) # select only water cells
 
-# Dben <- read.csv("./data_benthos/Station_Data.csv")
-
-bm$CellID <- bm$DistanceToNearestKm <- NA #create a new empty variable
+# create new empty variables with the CellID corresponding to the station
+# and distance between the station and the cell center
+bm$CellID <- bm$DistanceToNearestKm <- NA 
 
 # https://www.r-bloggers.com/2019/10/geographic-distance/
-
 # find geodesic distances from each cell to station
-# and select the closest non-missing as a Replacement
+# and select the closest cell
+# record that CellID and distance to the station
 for (i in 1:nrow(bm)) { # i = 1
     # distance from this station to each cell
     d <- geosphere::distm(bm[i, c("LONGITUDE", "LATITUDE")],
                           Dcells[, c("LON", "LAT")]) / 1000L
+    # index of the cell that is the closest to the station
     di <- which.min(d)
+    # corresponding distance (smallest from all)
     bm$DistanceToNearestKm[i] <- d[di]
+    # corresponding CellID
     bm$CellID[i] <- Dcells$CellID[di]
 }
+# make sure stations are not far from the cells, remove outliers >= 10 km
 bm <- bm %>% 
-    # make sure stations are not far from the cells
-    filter(DistanceToNearestKm < 10) 
+    filter(DistanceToNearestKm < 10) %>% 
+    rename(Date = SAMPLE_DATE) %>% 
+    mutate(Date = as.Date(Date))
+summary(bm)
 
 # Data compilation complete!
 write.csv(bm, './dataderived/Cell_Proximity.csv', 
           row.names = FALSE)
-
-
