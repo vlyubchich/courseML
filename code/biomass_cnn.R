@@ -38,9 +38,9 @@ y <- BM$BM_bv
 ## Standardize ----
 # y <- y / max(y)
 y <- scale(y)
-for (j in 1:dim(Drca_array)[4]) {
-    Drca_array[, 1, , j] <- scale(Drca_array[, 1, , j])
-}
+# for (j in 1:dim(Drca_array)[4]) {
+#     Drca_array[, 1, , j] <- scale(Drca_array[, 1, , j])
+# }
 
 ## Training and testing sets ----
 set.seed(123) # set the seed to create reproducible results
@@ -59,12 +59,13 @@ test_y <- y[itest]
 model <- keras_model_sequential()
 model %>%
     layer_conv_1d(kernel_size = c(w/5), padding = "same",
-                  filters = 32,
+                  filters = 16,
                   activation = "relu",
                   input_shape = dim(train_x)[-1],
                   data_format = "channels_last") %>%
     layer_flatten() %>%
     layer_dense(units = 50, activation = "relu") %>%
+    # layer_batch_normalization() %>%
     layer_dropout(rate = 0.25) %>%
     layer_dense(units = 1, activation = "linear")
 summary(model)
@@ -73,7 +74,7 @@ model %>% compile(
     loss = "mean_squared_error", # https://keras.io/api/losses/
     # metric = "root_mean_squared_error", # https://keras.io/api/metrics/
     # optimizer = "adam"
-    optimizer = optimizer_adam(learning_rate = 0.001, decay = 1e-4)
+    optimizer = optimizer_adam(learning_rate = 0.0001, decay = 0)
 )
 
 history <- model %>%
@@ -91,3 +92,8 @@ e <- test_y - predictions
 sqrt(mean(e^2))
 # MAE = mean absolute error
 mean(abs(e))
+
+# visualize
+plot(test_y, predictions, las = 1)
+abline(coef = c(0, 1), col = "blue", lwd = 2)
+
