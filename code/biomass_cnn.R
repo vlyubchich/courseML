@@ -5,6 +5,9 @@ library(dplyr)
 library(keras)
 library(tensorflow)
 
+#devtools::install_github("andrie/deepviz")
+library(deepviz)
+
 # Data ----
 # load biomass
 BM <- read.csv("./dataderived/Cell_Proximity.csv") %>%
@@ -96,4 +99,6 @@ mean(abs(e))
 # visualize
 plot(test_y, predictions, las = 1)
 abline(coef = c(0, 1), col = "blue", lwd = 2)
+
+model %>% plot_model()
 
