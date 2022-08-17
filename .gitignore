@@ -3,6 +3,8 @@
 .RData
 .Ruserdata
 
+*.ini
+
 *.doc
 *.docx
 *.html
