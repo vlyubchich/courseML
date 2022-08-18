@@ -37,6 +37,7 @@ for (i in 1:n) { # i = 1
     Drca_array[i, 1, , ] <- data.matrix(drca)
 }
 y <- BM$BM_bv
+y_cat <- y > 0 # categorical response (absence/presence of biomass, 0/1)
 
 ## Standardize ----
 # y <- y / max(y)
@@ -55,8 +56,10 @@ train_y <- y[itrain]
 test_x <- Drca_array[itest,,,,drop = FALSE]
 test_y <- y[itest]
 
+train_y_cat <- y_cat[itrain]
+test_y_cat <- y_cat[itest]
 
-# Model ----
+# CNN model ----
 # https://towardsdatascience.com/deep-learning-which-loss-and-activation-functions-should-i-use-ac02f1c56aa8
 # CNN model
 model <- keras_model_sequential()
@@ -86,7 +89,7 @@ history <- model %>%
         validation_split = 0.2
     )
 
-# Predictions on the test set ----
+## Predictions on the test set ----
 # note that the response has been normalized
 predictions <- predict(model, test_x)
 # test errors
@@ -101,4 +104,40 @@ plot(test_y, predictions, las = 1)
 abline(coef = c(0, 1), col = "blue", lwd = 2)
 
 model %>% plot_model()
+
+
+
+# Transfer learning ----
+
+# https://keras.io/guides/transfer_learning/
+# https://towardsdatascience.com/understanding-and-coding-a-resnet-in-keras-446d7ff84d33
+
+# the code below doesn't work for our data because of the
+# input dimensions that must be at least 32x32 with 3 channels
+base_model <- application_resnet50(
+    include_top = FALSE,
+    weights = "imagenet",
+    input_tensor = NULL,
+    input_shape = dim(train_x)[-1],
+    pooling = "avg",
+    classes = 2
+)
+
+#freeze the added layers
+for (layer in base_model$layers)
+    layer$trainable <- FALSE
+# summary(base_model)
+
+model_output <-
+    # layer_resizing(height = 300, width = 300, interpolation = "bilinear") %>%
+    base_model$output %>%
+    layer_flatten(trainable = TRUE) %>%
+    layer_dense(units = 512, activation = "relu", trainable = TRUE) %>%
+    # layer_batch_normalization(trainable = TRUE) %>%
+    layer_dropout(rate = 0.5, trainable = TRUE) %>%
+    layer_dense(units = 1, trainable = TRUE, activation = "sigmoid")
+
+model <- keras_model(inputs = base_model$input, outputs = model_output)
+
+# summary(model)
 
