@@ -2,6 +2,8 @@
 
 # https://towardsdatascience.com/illustrated-guide-to-lstms-and-gru-s-a-step-by-step-explanation-44e9eb85bf21
 
+# ~~ Auto-regressive model, AR(p):
+# X(t) = a + b1 * X(t-1) + ... + bp * X(t-p)
 
 rm(list = ls()) # clean the environment
 
@@ -54,11 +56,12 @@ Drca <- read.csv("./dataraw/rca_data_2012_2022-06-29.csv") %>%
     mutate(Date = as.Date(Date)) %>%
     arrange(Date)
 y <- Drca$DOAVEG_avg
-plot(y)
+plot(y, type = "l")
 
 Y <- lag_transform(y, 1)
 head(Y)
-
+# ?lag
+# ?dplyr::lag
 
 # Model ----
 

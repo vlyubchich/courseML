@@ -114,11 +114,12 @@ model %>% plot_model()
 
 # the code below doesn't work for our data because of the
 # input dimensions that must be at least 32x32 with 3 channels
+# we have 1 x 30
 base_model <- application_resnet50(
     include_top = FALSE,
     weights = "imagenet",
     input_tensor = NULL,
-    input_shape = dim(train_x)[-1],
+    input_shape = dim(train_x)[-1], #input dimensions that must be at least 32x32
     pooling = "avg",
     classes = 2
 )
@@ -140,4 +141,4 @@ model_output <-
 model <- keras_model(inputs = base_model$input, outputs = model_output)
 
 # summary(model)
-
+# Proceed fitting the model as usual.
