@@ -1,4 +1,8 @@
 #### LSTM
+
+# https://towardsdatascience.com/illustrated-guide-to-lstms-and-gru-s-a-step-by-step-explanation-44e9eb85bf21
+
+
 rm(list = ls()) # clean the environment
 
 # Libraries and custom functions ----
